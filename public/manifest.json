@@ -2,22 +2,24 @@
   "name": "Live Meeting Translator (KR-VN)",
   "short_name": "Dịch Hội Thoại",
   "description": "Ứng dụng phiên dịch trực tiếp cuộc họp Tiếng Hàn - Tiếng Việt / Tiếng Anh",
+  "id": "/",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#090d16",
   "theme_color": "#090d16",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/favicon.svg",
+      "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.svg",
+      "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
