@@ -6,9 +6,11 @@ import ControlBar from './components/ControlBar';
 import SettingsModal from './components/SettingsModal';
 import PhoneConnectModal from './components/PhoneConnectModal';
 import ManualInputModal from './components/ManualInputModal';
+import MeetingSummaryModal from './components/MeetingSummaryModal';
+import InstallGuideModal from './components/InstallGuideModal';
 import { SpeechRecognitionService } from './services/speech';
 import { translateText } from './services/translator';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, FileText } from 'lucide-react';
 
 export default function App() {
   // 1. Core State
@@ -30,6 +32,8 @@ export default function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPhoneConnectOpen, setIsPhoneConnectOpen] = useState(false);
   const [isManualInputOpen, setIsManualInputOpen] = useState(false);
+  const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [isInstallGuideOpen, setIsInstallGuideOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [installPrompt, setInstallPrompt] = useState(null);
 
@@ -279,8 +283,14 @@ export default function App() {
         onOpenPhoneConnect={() => setIsPhoneConnectOpen(true)}
         onClearHistory={handleClearHistory}
         hasMessages={messages.length > 0}
-        installPrompt={installPrompt}
-        onInstallApp={handleInstallApp}
+        onOpenSummary={() => setIsSummaryOpen(true)}
+        onOpenInstallGuide={() => {
+          if (installPrompt) {
+            handleInstallApp();
+          } else {
+            setIsInstallGuideOpen(true);
+          }
+        }}
       />
 
       {/* 2. Speaker Role Selector (🇰🇷 Đối tác vs 🇻🇳 Tôi) */}
@@ -289,6 +299,25 @@ export default function App() {
         onToggleSpeaker={handleToggleSpeaker}
         isListening={isListening}
       />
+
+      {/* Quick Summary Floating Prompt if conversation finished */}
+      {!isListening && messages.length > 0 && (
+        <div className="mx-3 my-1.5 p-2.5 rounded-2xl bg-gradient-to-r from-amber-950/60 to-orange-950/60 border border-amber-800/60 flex items-center justify-between gap-2 shadow-lg animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <span className="text-base">📝</span>
+            <div className="text-[11px] leading-tight">
+              <span className="font-bold text-amber-300 block">Hội thoại đã kết thúc!</span>
+              <span className="text-slate-300">Tóm tắt các ý chính và kết luận cuộc họp?</span>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsSummaryOpen(true)}
+            className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold rounded-xl text-xs shadow-md active:scale-95 transition-all shrink-0"
+          >
+            Tóm tắt ngay
+          </button>
+        </div>
+      )}
 
       {/* Error alert banner if any */}
       {errorMessage && (
@@ -326,6 +355,20 @@ export default function App() {
       />
 
       {/* 5. Modals */}
+      <MeetingSummaryModal
+        isOpen={isSummaryOpen}
+        onClose={() => setIsSummaryOpen(false)}
+        messages={messages}
+        aiConfig={aiConfig}
+      />
+
+      <InstallGuideModal
+        isOpen={isInstallGuideOpen}
+        onClose={() => setIsInstallGuideOpen(false)}
+        installPrompt={installPrompt}
+        onTriggerInstall={handleInstallApp}
+      />
+
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

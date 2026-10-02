@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, QrCode, Trash2, ZoomIn, ZoomOut, ShieldCheck, Languages } from 'lucide-react';
+import { Settings, QrCode, Trash2, ZoomIn, ZoomOut, ShieldCheck, FileText, Download } from 'lucide-react';
 
 export default function Header({
   targetLang,
@@ -10,8 +10,8 @@ export default function Header({
   onOpenPhoneConnect,
   onClearHistory,
   hasMessages,
-  installPrompt,
-  onInstallApp
+  onOpenSummary,
+  onOpenInstallGuide
 }) {
   return (
     <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 safe-top">
@@ -32,6 +32,28 @@ export default function Header({
 
         {/* Right Action Controls */}
         <div className="flex items-center gap-1.5">
+          {/* 1. Tóm Tắt Cuộc Họp Button (Hiển thị khi đã có hội thoại) */}
+          {hasMessages && (
+            <button
+              onClick={onOpenSummary}
+              className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold rounded-lg text-xs shadow-md shadow-amber-500/20 active:scale-95 transition-all animate-bounce"
+              title="Tóm tắt nội dung chính cuộc họp bằng AI"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Tóm tắt</span>
+            </button>
+          )}
+
+          {/* 2. Cài Đặt App Button (Luôn hiển thị) */}
+          <button
+            onClick={onOpenInstallGuide}
+            className="flex items-center gap-1 px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
+            title="Cài đặt ứng dụng vào điện thoại"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span className="hidden xs:inline">Cài App</span>
+          </button>
+
           {/* Target Language Toggle (when Korean is spoken) */}
           <div className="flex items-center bg-slate-800/80 p-0.5 rounded-lg border border-slate-700/60 text-xs">
             <button
@@ -76,27 +98,6 @@ export default function Header({
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
           </div>
-
-          {/* Install App Button if supported */}
-          {installPrompt && (
-            <button
-              onClick={onInstallApp}
-              className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-600/30 active:scale-95 transition-all"
-              title="Cài đặt ứng dụng vào điện thoại"
-            >
-              <span>📲</span>
-              <span className="hidden xs:inline">Cài App</span>
-            </button>
-          )}
-
-          {/* Phone QR Connect */}
-          <button
-            onClick={onOpenPhoneConnect}
-            className="p-1.5 bg-slate-800/80 hover:bg-slate-700 text-indigo-300 hover:text-indigo-200 border border-slate-700/60 rounded-lg transition-colors"
-            title="Mở trên điện thoại"
-          >
-            <QrCode className="w-4 h-4" />
-          </button>
 
           {/* Clear button */}
           {hasMessages && (

@@ -147,3 +147,117 @@ async function fallbackTranslate(text, sourceLang, targetLang) {
     return `[Lỗi dịch thuật: ${err.message}]`;
   }
 }
+
+/**
+ * Tóm tắt toàn bộ cuộc hội thoại cuộc họp qua Gemini API hoặc OpenAI API
+ */
+export async function summarizeMeeting({
+  messages,
+  summaryLang = 'vi', // 'vi', 'ko', 'bilingual'
+  provider = 'gemini',
+  apiKey = '',
+  model = 'gemini-2.0-flash',
+  meetingContext = 'Thương mại và kinh doanh'
+}) {
+  if (!messages || messages.length === 0) {
+    return 'Chưa có nội dung hội thoại để tóm tắt.';
+  }
+
+  // Chuẩn bị văn bản đàm thoại
+  const transcriptLines = messages.map((m, idx) => {
+    const role = m.speaker === 'partner' ? '🇰🇷 Đối tác Hàn Quốc' : '🇻🇳 Tôi (Việt Nam)';
+    return `${idx + 1}. [${m.timestamp}] ${role}:\n   - Lời nói: "${m.original}"\n   - Dịch: "${m.translated || ''}"`;
+  }).join('\n\n');
+
+  const langInstruction = summaryLang === 'bilingual'
+    ? 'Song ngữ (Tiếng Việt và Tiếng Hàn kèm theo)'
+    : summaryLang === 'ko'
+    ? 'Tiếng Hàn (한국어)'
+    : 'Tiếng Việt';
+
+  const systemInstruction = `Bạn là trợ lý thư ký hội nghị chuyên nghiệp. Hãy đọc toàn bộ biên bản đàm thoại sau đây giữa bên Hàn Quốc và bên Việt Nam (${meetingContext}) và lập bản tóm tắt cuộc họp ngắn gọn, súc tích bằng ${langInstruction}.
+
+Bản tóm tắt PHẢI có cấu trúc rõ ràng sau:
+📌 CHỦ ĐỀ CHÍNH CUỘC HỌP
+💬 CÁC NỘI DUNG ĐÃ THẢO LUẬN
+🤝 KẾT QUẢ / ĐIỂM ĐÃ THỐNG NHẤT
+🎯 HÀNH ĐỘNG TIẾP THEO (Action Items - Nếu có)
+
+Lưu ý:
+- Trình bày dạng danh sách gạch đầu dòng ngắn gọn, chuyên nghiệp.
+- Giữ chính xác số liệu, cam kết, thời hạn hoặc tên riêng nếu được nhắc đến.`;
+
+  if (provider === 'gemini' && apiKey && apiKey.trim()) {
+    try {
+      const actualModel = model || 'gemini-2.0-flash';
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${actualModel}:generateContent?key=${apiKey.trim()}`;
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [
+                { text: `${systemInstruction}\n\nBIÊN BẢN HỘI THOẠI:\n${transcriptLines}` }
+              ]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 1200
+          }
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Lỗi Gemini (${res.status})`);
+      }
+
+      const data = await res.json();
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'Không tạo được tóm tắt.';
+    } catch (err) {
+      console.warn('Lỗi gọi Gemini Summarize:', err);
+      return `[Không thể tạo tóm tắt qua Gemini: ${err.message}]`;
+    }
+  }
+
+  if (provider === 'openai' && apiKey && apiKey.trim()) {
+    try {
+      const actualModel = model || 'gpt-4o-mini';
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey.trim()}`
+        },
+        body: JSON.stringify({
+          model: actualModel,
+          messages: [
+            { role: 'system', content: systemInstruction },
+            { role: 'user', content: transcriptLines }
+          ],
+          temperature: 0.2,
+          max_tokens: 1200
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Lỗi OpenAI (${res.status})`);
+      }
+
+      const data = await res.json();
+      return data?.choices?.[0]?.message?.content?.trim() || 'Không tạo được tóm tắt.';
+    } catch (err) {
+      console.warn('Lỗi gọi OpenAI Summarize:', err);
+      return `[Không thể tạo tóm tắt qua OpenAI: ${err.message}]`;
+    }
+  }
+
+  // Nếu không có API Key, tóm tắt cơ bản dựa trên các câu đã có
+  return `📌 TÓM TẮT CƠ BẢN (${messages.length} câu đàm thoại):\n` +
+    messages.map((m, i) => `${i + 1}. [${m.speaker === 'partner' ? '🇰🇷 Hàn' : '🇻🇳 Việt'}] ${m.original} -> ${m.translated}`).join('\n') +
+    '\n\n💡 Gợi ý: Hãy nhập Gemini API Key trong phần Cài đặt để AI tự động phân tích sâu các ý chính và hành động tiếp theo.';
+}
