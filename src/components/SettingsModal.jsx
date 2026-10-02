@@ -12,6 +12,7 @@ export default function SettingsModal({
   const [apiKey, setApiKey] = useState(config.apiKey || '');
   const [model, setModel] = useState(config.model || 'gemini-2.0-flash');
   const [meetingContext, setMeetingContext] = useState(config.meetingContext || 'Thương mại và kinh doanh');
+  const [silenceDelay, setSilenceDelay] = useState(config.silenceDelay || 1500);
   const [showKey, setShowKey] = useState(false);
   const [testStatus, setTestStatus] = useState(null); // 'loading', 'success', 'error'
   const [testResult, setTestResult] = useState('');
@@ -57,7 +58,8 @@ export default function SettingsModal({
       provider,
       apiKey: apiKey.trim(),
       model,
-      meetingContext
+      meetingContext,
+      silenceDelay: Number(silenceDelay) || 1500
     });
     onClose();
   };
@@ -221,6 +223,26 @@ export default function SettingsModal({
               <option value="Xây dựng và kỹ thuật công trình">Xây dựng & Kỹ thuật</option>
               <option value="Giao tiếp thân mật thông thường">Giao tiếp thường nhật / Thân mật</option>
             </select>
+          </div>
+
+          {/* Silence Debounce / Sentence Boundary */}
+          <div>
+            <label className="font-semibold text-slate-300 block mb-1">
+              Điểm ngắt câu (Chờ im lặng bao lâu thì chốt dịch 1 lần):
+            </label>
+            <select
+              value={silenceDelay}
+              onChange={(e) => setSilenceDelay(Number(e.target.value))}
+              className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+            >
+              <option value={1000}>1.0 giây (Nhanh - Cho người nói nhanh, dứt khoát)</option>
+              <option value={1500}>1.5 giây (Tiêu chuẩn - Khuyên dùng trong cuộc họp)</option>
+              <option value={2000}>2.0 giây (Chậm rãi - Lắng nghe hết câu dài hoặc người nói ngập ngừng)</option>
+              <option value={2500}>2.5 giây (Rất kiên nhẫn - Đợi nói trọn vẹn cả đoạn dài)</option>
+            </select>
+            <p className="text-[10px] text-slate-400 mt-1">
+              Ứng dụng sẽ gom toàn bộ từ ngữ lại và chỉ dịch 1 lần duy nhất khi người nói dừng hẳn câu.
+            </p>
           </div>
 
           {/* Test Status Banner */}

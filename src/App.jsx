@@ -73,17 +73,36 @@ export default function App() {
     const now = new Date();
     const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
-    // Thêm ngay câu gốc vào danh sách với trạng thái đang dịch
-    const newMessage = {
-      id: messageId,
-      speaker: role,
-      original: sentenceText,
-      translated: '',
-      isTranslating: true,
-      timestamp
-    };
-
-    setMessages((prev) => [...prev, newMessage]);
+    // Kiểm tra chống trùng lặp / gom câu:
+    // Nếu câu mới là bản đầy đủ hơn của câu trước đó (hoặc giống hệt)
+    setMessages((prev) => {
+      if (prev.length > 0) {
+        const lastMsg = prev[prev.length - 1];
+        if (lastMsg.speaker === role) {
+          const lastClean = lastMsg.original.trim().toLowerCase();
+          const currClean = sentenceText.trim().toLowerCase();
+          // Nếu câu mới bao hàm câu cũ (ví dụ do ngắt quãng nhẹ) -> thay thế câu cũ bằng câu hoàn chỉnh
+          if (currClean.startsWith(lastClean) || currClean === lastClean) {
+            return prev.map((msg, idx) =>
+              idx === prev.length - 1
+                ? { ...msg, id: messageId, original: sentenceText, isTranslating: true, timestamp }
+                : msg
+            );
+          }
+        }
+      }
+      return [
+        ...prev,
+        {
+          id: messageId,
+          speaker: role,
+          original: sentenceText,
+          translated: '',
+          isTranslating: true,
+          timestamp
+        }
+      ];
+    });
 
     try {
       const translatedResult = await translateText({
@@ -131,7 +150,13 @@ export default function App() {
     };
   }, []);
 
-  // Cập nhật ngôn ngữ nhận diện khi speakerRole thay đổi
+  // Cập nhật silenceDelay và ngôn ngữ vào Speech Service
+  useEffect(() => {
+    if (speechServiceRef.current) {
+      speechServiceRef.current.setSilenceDelay(aiConfig.silenceDelay || 1500);
+    }
+  }, [aiConfig.silenceDelay]);
+
   useEffect(() => {
     if (speechServiceRef.current) {
       const langCode = speakerRole === 'partner' ? 'ko-KR' : 'vi-VN';
@@ -154,6 +179,7 @@ export default function App() {
 
       service.start({
         lang: langCode,
+        silenceDelay: aiConfig.silenceDelay || 1500,
         onInterimResult: (text) => {
           setInterimText(text);
         },
@@ -193,6 +219,7 @@ export default function App() {
         setTimeout(() => {
           speechServiceRef.current.start({
             lang: langCode,
+            silenceDelay: aiConfig.silenceDelay || 1500,
             onInterimResult: (text) => setInterimText(text),
             onFinalResult: (finalText) => {
               setInterimText('');

@@ -184,8 +184,11 @@ export default function TranscriptList({
           >
             "{interimText}"
           </p>
-          <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-            <span>Dừng nói để hoàn thành và dịch câu tự động...</span>
+          <div className="text-[11px] text-slate-400 mt-2 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-indigo-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping" />
+              Đang gom câu... Dừng lại (ngắt giọng) để chốt dịch 1 lần
+            </span>
           </div>
         </div>
       )}
