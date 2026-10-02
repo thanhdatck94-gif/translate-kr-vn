@@ -31,6 +31,28 @@ export default function App() {
   const [isPhoneConnectOpen, setIsPhoneConnectOpen] = useState(false);
   const [isManualInputOpen, setIsManualInputOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [installPrompt, setInstallPrompt] = useState(null);
+
+  // Lắng nghe sự kiện trước khi cài đặt PWA (WebAPK)
+  useEffect(() => {
+    const handleBeforeInstall = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    };
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   // AI Configuration state (chỉ lưu trong RAM hoặc sessionStorage)
   const [aiConfig, setAiConfig] = useState(() => {
@@ -257,6 +279,8 @@ export default function App() {
         onOpenPhoneConnect={() => setIsPhoneConnectOpen(true)}
         onClearHistory={handleClearHistory}
         hasMessages={messages.length > 0}
+        installPrompt={installPrompt}
+        onInstallApp={handleInstallApp}
       />
 
       {/* 2. Speaker Role Selector (🇰🇷 Đối tác vs 🇻🇳 Tôi) */}

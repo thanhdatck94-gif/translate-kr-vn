@@ -9,7 +9,9 @@ export default function Header({
   onOpenSettings,
   onOpenPhoneConnect,
   onClearHistory,
-  hasMessages
+  hasMessages,
+  installPrompt,
+  onInstallApp
 }) {
   return (
     <header className="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-3 py-2.5 safe-top">
@@ -74,6 +76,18 @@ export default function Header({
               <ZoomIn className="w-3.5 h-3.5" />
             </button>
           </div>
+
+          {/* Install App Button if supported */}
+          {installPrompt && (
+            <button
+              onClick={onInstallApp}
+              className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg font-bold text-xs shadow-md shadow-emerald-600/30 active:scale-95 transition-all"
+              title="Cài đặt ứng dụng vào điện thoại"
+            >
+              <span>📲</span>
+              <span className="hidden xs:inline">Cài App</span>
+            </button>
+          )}
 
           {/* Phone QR Connect */}
           <button
